@@ -1,9 +1,9 @@
 import { Divider, Table, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import agent from '../../app/api/agent';
 import { Product } from "../../app/models/products";
 
 export default function ProductDetails() {
@@ -11,8 +11,8 @@ export default function ProductDetails() {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   useEffect(() => {
-    axios.get(`http://localhost:5000/E-CommerceSkiStore_API/Products/${id}`)
-      .then(response => setProduct(response.data))
+    id && agent.Catalog.details(parseInt(id))
+      .then(response => setProduct(response))
       .catch(error => console.log(error))
       .finally(() => setLoading(false))
   }, [id])
