@@ -1,11 +1,15 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
+import { router } from "../router/Routers";
+
+const sleep = () => new Promise(resolve => setTimeout(resolve, 500))
 
 axios.defaults.baseURL = "http://localhost:5000/api/"
 
 const responseBody = (response: AxiosResponse) => response.data
 
-axios.interceptors.response.use(response => {
+axios.interceptors.response.use(async response => {
+  await sleep()
   return response
 }, (error: AxiosError) => {
   const { data, status } = error.response as AxiosResponse
@@ -29,7 +33,8 @@ axios.interceptors.response.use(response => {
       toast.error(data.title)
       break
     case 500:
-      toast.error(data.title)
+      router.navigate('/server-error', { state: { error: data } })
+      //toast.error(data.title)
       break
     default:
       break
@@ -39,8 +44,8 @@ axios.interceptors.response.use(response => {
 
 const requests = {
   get: (url: string) => axios.get(url).then(responseBody),
-  post: (url: string, body: {}) => axios.post(url, body).then(responseBody),
-  put: (url: string, body: {}) => axios.put(url, body).then(responseBody),
+  post: (url: string, body: object) => axios.post(url, body).then(responseBody),
+  put: (url: string, body: object) => axios.put(url, body).then(responseBody),
   delete: (url: string) => axios.delete(url).then(responseBody),
 }
 

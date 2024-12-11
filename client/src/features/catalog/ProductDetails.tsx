@@ -4,6 +4,8 @@ import Typography from '@mui/material/Typography';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import agent from '../../app/api/agent';
+import NotFound from '../../app/errors/NotFound';
+import LoadingComponent from '../../app/layout/LoadingComponent';
 import { Product } from "../../app/models/products";
 
 export default function ProductDetails() {
@@ -11,15 +13,31 @@ export default function ProductDetails() {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   useEffect(() => {
-    id && agent.Catalog.details(parseInt(id))
-      .then(response => setProduct(response))
-      .catch(error => console.log(error))
-      .finally(() => setLoading(false))
-  }, [id])
+    if (!id) return; // 如果 id 不存在，则退出
 
-  if (loading) return <h3>Loading...</h3>
-  if (!product) return <h3>Product Not Found</h3>
+    // 定义异步函数
+    const fetchProduct = async () => {
+      setLoading(true); // 显式设置加载状态
+      try {
+        const response = await agent.Catalog.details(parseInt(id));
+        setProduct(response);
+      } catch (error) {
+        console.error("Error fetching product details:", error);
+      } finally {
+        setLoading(false); // 确保加载状态被正确清理
+      }
+    };
 
+    fetchProduct();
+
+    // 可选：清理函数
+    return () => {
+      setProduct(null); // 在组件卸载时清除状态
+    };
+  }, [id]);
+
+  if (loading) return <LoadingComponent message='Loading Product...' />
+  if (!product) return <NotFound />
   return (
     <Grid container spacing={6}>
       <Grid size={{ xs: 6 }}>
