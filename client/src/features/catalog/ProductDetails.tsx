@@ -2,7 +2,7 @@ import { LoadingButton } from '@mui/lab';
 import { Divider, Table, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import agent from '../../app/api/agent';
 import { useStoreContext } from '../../app/context/StoreContext';
@@ -11,7 +11,7 @@ import LoadingComponent from '../../app/layout/LoadingComponent';
 import { Product } from "../../app/models/products";
 
 export default function ProductDetails() {
-  const { basket } = useStoreContext()
+  const { basket, setBasket, removeItem } = useStoreContext()
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
@@ -24,26 +24,42 @@ export default function ProductDetails() {
 
   useEffect(() => {
     if (item) setQuantity(item.quantity)
-
-    if (!id) return; // 如果 id 不存在，则退出
-    // 定义异步函数
-    const fetchProduct = async () => {
-      setLoading(true); // 显式设置加载状态
-      try {
-        const response = await agent.Catalog.details(parseInt(id));
-        setProduct(response);
-      } catch (error) {
-        console.error("Error fetching product details:", error);
-      } finally {
-        setLoading(false); // 确保加载状态被正确清理
-      }
-    };
-    fetchProduct();
-    // 可选：清理函数
-    return () => {
-      setProduct(null); // 在组件卸载时清除状态
-    };
+    id && agent.Catalog.details(parseInt(id))
+      .then(response => setProduct(response))
+      .catch(error => console.log(error.response))
+      .finally(() => setLoading(false))
   }, [id, item]);
+
+
+  function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
+    if (parseInt(event.currentTarget.value) >= 0) {
+      setQuantity(parseInt(event.currentTarget.value))
+    }
+  }
+
+  function handleUpdateCart() {
+    if (!product) return
+    setSubmitting(true)
+    if (!item || quantity > item.quantity) {
+      const updatedQuantity = item ? quantity - item.quantity : quantity
+      agent.Basket.addItem(product.id, updatedQuantity)
+        .then(basket => setBasket(basket))
+        .catch(error => console.log(error))
+        .finally(() => setSubmitting(false))
+
+
+    } else {
+      const updatedQuantity = item.quantity - quantity
+      agent.Basket.removeItem(product.id, updatedQuantity)
+        .then(() => removeItem(product.id, updatedQuantity))
+        .catch(error => console.log(error))
+        .finally(() => setSubmitting(false))
+    }
+  }
+
+
+
+
 
   if (loading) return <LoadingComponent message='Loading Product...' />
   if (!product) return <NotFound />
@@ -85,6 +101,7 @@ export default function ProductDetails() {
         <Grid container spacing={2}>
           <Grid size={{ xs: 6 }}>
             <TextField
+              onChange={handleInputChange}
               variant='outlined'
               type='number'
               label="Quantity in Cart"
@@ -94,6 +111,9 @@ export default function ProductDetails() {
           </Grid>
           <Grid size={{ xs: 6 }}>
             <LoadingButton
+              disabled={item?.quantity === quantity || !item && quantity === 0}
+              loading={submitting}
+              onClick={handleUpdateCart}
               sx={{ height: '55px' }}
               color='primary'
               size='large'
