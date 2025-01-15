@@ -8,7 +8,10 @@ import { RouterProvider } from 'react-router-dom';
 import { StoreProvider } from './app/context/StoreContext.tsx';
 import './app/layout/style.css';
 import { router } from './app/router/Routers.tsx';
+import { configureStore } from './app/store/configureStore.ts';
 
+const store = configureStore()
+console.log(store.getState())
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -28,8 +28,6 @@ namespace E_CommerceSkiStore_API.Controllers
 
 
 
-
-
         // POST api/<BasketController>
         [HttpPost] //api/basket?productId=3&&quantity=2
         public async Task<ActionResult<BasketDto>> AddItemToBasket(int productId,int quantity)
@@ -50,8 +48,6 @@ namespace E_CommerceSkiStore_API.Controllers
             return BadRequest(new ProblemDetails { Title= "Problem saving item to basket!"});
             
         }
-
-
 
 
 
