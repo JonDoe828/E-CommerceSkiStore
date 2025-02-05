@@ -24,6 +24,7 @@ export default function ProductDetails() {
 
   useEffect(() => {
     if (item) setQuantity(item.quantity)
+    // eslint-disable-next-line
     id && agent.Catalog.details(parseInt(id))
       .then(response => setProduct(response))
       .catch(error => console.log(error.response))
