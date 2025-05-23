@@ -4,22 +4,23 @@ import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
 import { ChangeEvent, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import agent from '../../app/api/agent';
 import NotFound from '../../app/errors/NotFound';
 import LoadingComponent from '../../app/layout/LoadingComponent';
-import { Product } from "../../app/models/products";
 import { useAppDispatch, useAppSelector } from '../../app/store/configureStore';
 import { addBasketItemAsync, removeBasketItemAsync } from '../basket/basketSlice';
+import { fetchProductAsync, productSelectors } from './catalogSlice';
 
 export default function ProductDetails() {
   // const { basket, setBasket, removeItem } = useStoreContext()
   const { basket, status } = useAppSelector(state => state.basket)
+  const { status: productStatus } = useAppSelector(state => state.catalog)
   const dispatch = useAppDispatch()
-
-
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<Product | null>(null)
-  const [loading, setLoading] = useState(true)
+  const product = useAppSelector(state => productSelectors.selectById(state, Number(id)))
+
+
+  // const [product, setProduct] = useState<Product | null>(null)
+  // const [loading, setLoading] = useState(true)
 
   const [quantity, setQuantity] = useState(0)
   // const [submitting, setSubmitting] = useState(false)
@@ -29,12 +30,12 @@ export default function ProductDetails() {
 
   useEffect(() => {
     if (item) setQuantity(item.quantity)
-    // eslint-disable-next-line
-    id && agent.Catalog.details(parseInt(id))
-      .then(response => setProduct(response))
-      .catch(error => console.log(error.response))
-      .finally(() => setLoading(false))
-  }, [id, item]);
+    // id && agent.Catalog.details(parseInt(id))
+    //   .then(response => setProduct(response))
+    //   .catch(error => console.log(error.response))
+    //   .finally(() => setLoading(false))
+    if (!product && id) dispatch(fetchProductAsync(parseInt(id)))
+  }, [id, item, dispatch, product]);
 
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
@@ -68,8 +69,12 @@ export default function ProductDetails() {
 
 
 
-  if (loading) return <LoadingComponent message='Loading Product...' />
+  // if (loading) return <LoadingComponent message='Loading Product...' />
+  if (productStatus.includes('pending')) return <LoadingComponent message='Loading Product...' />
+
   if (!product) return <NotFound />
+
+
   return (
     <Grid container spacing={6}>
       <Grid size={{ xs: 6 }}>

@@ -1,6 +1,7 @@
 ﻿using E_CommerceSkiStore_API.Data;
 using E_CommerceSkiStore_API.DTOs;
 using E_CommerceSkiStore_API.Entities;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,12 +14,13 @@ namespace E_CommerceSkiStore_API.Controllers
     {
         private readonly StoreContext _context;
 
-        public BasketController(StoreContext context) {
+        public BasketController(StoreContext context)
+        {
             _context = context;
         }
 
         // GET: api/<BasketController>
-        [HttpGet(Name ="GetBasket")]
+        [HttpGet(Name = "GetBasket")]
         public async Task<ActionResult<BasketDto>> GetBasket()
         {
             var basket = await RetrieveBasket();
@@ -30,23 +32,23 @@ namespace E_CommerceSkiStore_API.Controllers
 
         // POST api/<BasketController>
         [HttpPost] //api/basket?productId=3&&quantity=2
-        public async Task<ActionResult<BasketDto>> AddItemToBasket(int productId,int quantity)
+        public async Task<ActionResult<BasketDto>> AddItemToBasket(int productId, int quantity)
         {
             //get basket || create basket
             var basket = await RetrieveBasket();
             if (basket == null) basket = CreateBasket();
             //get product
             var product = await _context.Products.FindAsync(productId);
-            if (product == null) return NotFound();
+            if (product == null) return BadRequest(new ProblemDetails { Title = "Product Not Found!" });
             //add items
             basket.AddItem(product, quantity);
             //save changes
-            var result = await _context.SaveChangesAsync()>0;
+            var result = await _context.SaveChangesAsync() > 0;
 
             if (result) return CreatedAtRoute("GetBasket", MapBasketToDto(basket));
 
-            return BadRequest(new ProblemDetails { Title= "Problem saving item to basket!"});
-            
+            return BadRequest(new ProblemDetails { Title = "Problem saving item to basket!" });
+
         }
 
 
@@ -78,7 +80,7 @@ namespace E_CommerceSkiStore_API.Controllers
         }
         private Basket CreateBasket()
         {
-            var buyerId=Guid.NewGuid().ToString();
+            var buyerId = Guid.NewGuid().ToString();
             var cookieOptions = new CookieOptions { IsEssential = true, Expires = DateTime.Now.AddDays(30) };
             Response.Cookies.Append("buyerId", buyerId, cookieOptions);
             var basket = new Basket { BuyerId = buyerId };
