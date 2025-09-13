@@ -1,12 +1,44 @@
-﻿using E_CommerceSkiStore_API.Entities;
+﻿using System.Threading.Tasks;
+using E_CommerceSkiStore_API.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace E_CommerceSkiStore_API.Data
 {
     public static class DbInitializer
     {
-        public static void Initialize(StoreContext context)
+        public static async Task Initialize(StoreContext context, UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
         {
-            if(context.Products.Any()) return;
+
+            foreach (var role in new[] { "Member", "Admin" })
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
+            }
+
+            if (!userManager.Users.Any())
+            {
+                var user = new User
+                {
+                    UserName = "bob",
+                    Email = "bob@gmail.com"
+                };
+                await userManager.CreateAsync(user, "Pa$$w0rd");
+                await userManager.AddToRoleAsync(user, "Member");
+
+                var admin = new User
+                {
+                    UserName = "admin",
+                    Email = "admin@gmail.com"
+                };
+                await userManager.CreateAsync(admin, "Pa$$w0rd");
+                await userManager.AddToRolesAsync(admin, new[] { "Member", "Admin" });
+            }
+
+
+
+            if (context.Products.Any()) return;
 
             var products = new List<Product>
             {
@@ -210,10 +242,10 @@ namespace E_CommerceSkiStore_API.Data
 
             context.Products.AddRange(products);
 
-/*            foreach(var product in products)
-            {
-                context.Products.Add(product);
-            }*/
+            /*            foreach(var product in products)
+                        {
+                            context.Products.Add(product);
+                        }*/
 
             context.SaveChanges();
 
